@@ -2,43 +2,65 @@
 
 # Game class handles all game logic
 class Game
-  def play_game
-    12.downto(1) do |turns|
-      guess = gets_user_guess
-      clue = get_clue guess
-      return end_game("The codebreaker") if clue == %w[black black black black]
-
-      puts "Clue: #{clue}"
-      puts "#{turns - 1} turns left"
-    end
-    end_game("The codemaker")
+  def setup_game
+    self.user_role = choose_role
+    self.code = user_role == "b" ? computer_code : user_code
+    play_game
   end
 
   private
 
-  attr_accessor :colors, :code
+  attr_accessor :colors, :code, :user_role
 
   def initialize
     self.colors = %w[blue red green yellow orange purple]
-    make_code
   end
 
-  def make_code
-    self.code = Array.new(4) { colors.sample }
-  end
-
-  def gets_user_guess
-    puts "Write a guess of 4 colors separated by a space. Valid colors: blue, red, green, yellow, orange, and purple."
-    guess = Array.new(4, "")
-    until guess_valid? guess
-      guess = gets.chomp.split(" ")
-      puts "Invalid color. Please try again." unless guess_valid? guess
+  def choose_role
+    role = ""
+    until %w[m b].include? role
+      puts "Enter 'b' to play as the codebreaker, or 'm' to play as the codemaker."
+      role = gets.chomp
+      "Invalid input. Please type either 'b' or 'm' and press enter." unless %w[m b].include? role
     end
-    guess
+    role
   end
 
-  def guess_valid?(guess)
-    guess.all? { |color| colors.include? color }
+  def computer_code
+    Array.new(4) { colors.sample }
+  end
+
+  def user_code
+    puts "Write a code of 4 colors separated by a space. Valid colors: blue, red, green, yellow, orange, and purple."
+    code = Array.new(4, "")
+    until code_valid? code
+      code = gets.chomp.split(" ")
+      puts "Invalid color(s). Please try again." unless code_valid? code
+    end
+    code
+  end
+
+  def code_valid?(code)
+    code.all? { |color| colors.include? color } && code.length == 4
+  end
+
+  def play_game
+    puts "You have 12 turns to guess the code!"
+    12.downto(1) do |turns|
+      guess = user_role == "b" ? user_code : computer_guess
+      clue = get_clue guess
+      return end_game("b") if clue == %w[black black black black]
+
+      puts "Clue: #{clue}"
+      puts "#{turns - 1} turns left"
+    end
+    end_game("m")
+  end
+
+  def computer_guess
+    guess = computer_code
+    p guess
+    guess
   end
 
   def get_clue(guess)
@@ -55,9 +77,14 @@ class Game
   end
 
   def end_game(winner)
-    puts "Game over! #{winner} wins the game!"
+    puts "Game over!"
+    if winner == user_role
+      puts "You win the game!"
+    else
+      puts "The computer wins the game :("
+    end
   end
 end
 
 game = Game.new
-game.play_game
+game.setup_game
